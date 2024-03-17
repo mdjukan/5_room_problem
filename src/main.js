@@ -252,3 +252,7 @@ document.getElementById('reset').addEventListener(
 	},
 	false
 );
+
+window.addEventListener('resize', function () {
+    window.location.reload();
+});
