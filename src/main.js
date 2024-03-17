@@ -21,7 +21,7 @@ let offsetY = (screenHeight-totalHeight)/2;
 let dotX = 0.1 * screenWidth;
 let dotY = 0.1 * screenHeight;
 let dotRadius = cornerRadius;
-let pathWidth = 0.015 * screenWidth;
+let pathWidth = 0.01 * screenWidth;
 
 let lastPos;
 
@@ -117,7 +117,7 @@ let image = new Konva.Image({
 layer.add(image);
 
 let context = canvas.getContext('2d');
-context.strokeStyle = '#000000';
+context.strokeStyle = '#040273';
 context.lineJoin = 'round';
 context.lineWidth = pathWidth;
 

@@ -6,8 +6,8 @@ body {
  align-items: center;
 }
 input {
-	margin: 20px;
-	font-size: 25px;
+	margin: 15px;
+	font-size: 20px;
 	background: #999999;
 	border: 5px solid black;
 	outline: none;
