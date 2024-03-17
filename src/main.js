@@ -1,54 +1,57 @@
+import './styles.css';
+import Konva from 'konva';
+
 /////////////CONSTANTS//////////
-screenWidth = 0.75 * window.innerWidth;
-screenHeight = 0.8 * window.innerHeight;
+let screenWidth = 0.75 * window.innerWidth;
+let screenHeight = 0.8 * window.innerHeight;
 
+let w = 0.01 * screenWidth;
+let cornerRadius = 0.015 * screenWidth;
+let L1 = 0.18 * screenWidth;
+let L2 = 0.15 * screenWidth;
+let L3 = (L1-w)/2;
+let L4 = (3*L1+w)/2;
 
-///TODO relativne velicine///
-w = 0.01 * screenWidth;
-cornerRadius = 0.015 * screenWidth;
-L1 = 0.18 * screenWidth;
-L2 = 0.15 * screenWidth;
-L3 = (L1-w)/2;
-L4 = (3*L1+w)/2;
+let totalWidth = 4*w+3*L1;
+let totalHeight = 3*w+2*L2;
 
-totalWidth = 4*w+3*L1;
-totalHeight = 3*w+2*L2;
+let offsetX = (screenWidth-totalWidth)/2;
+let offsetY = (screenHeight-totalHeight)/2;
 
-offsetX = (screenWidth-totalWidth)/2;
-offsetY = (screenHeight-totalHeight)/2;
+let dotX = 0.1 * screenWidth;
+let dotY = 0.1 * screenHeight;
+let dotRadius = cornerRadius;
+let pathWidth = 0.015 * screenWidth;
 
-dotX = 0.1 * screenWidth;
-dotY = 0.1 * screenHeight;
-dotRadius = cornerRadius;
-pathWidth = 0.015 * screenWidth;
+let lastPos;
 
 
 ///////////SCREEN INIT///////////
-var stage = new Konva.Stage({
+let stage = new Konva.Stage({
 	container: 'container',
 	width: screenWidth,
 	height: screenHeight
 });
 
-var layer = new Konva.Layer();
+let layer = new Konva.Layer();
 stage.add(layer);
 
 
 ///CORNERS///
-corners = [[0,0], [w+L1, 0], [2*w+2*L1, 0], [3*w+3*L1, 0],
+let corners = [[0,0], [w+L1, 0], [2*w+2*L1, 0], [3*w+3*L1, 0],
 	[0, w+L2], [w+L1, w+L2], [2*w+L1+L3, w+L2], [2*w+2*L1, w+L2], [3*w+3*L1, w+L2],
 	[0, 2*w+2*L2], [w+L4, 2*w+2*L2], [3*w+3*L1, 2*w+2*L2]]
 
 corners = corners.map(function (corner) {
-	x = corner[0];
-	y = corner[1];
+	let x = corner[0];
+	let y = corner[1];
 	return [x+w/2, y+w/2];
 });
 
 
 ///WALLLS////
 //[true if Ver, duzina, x, y]
-walls = [
+let walls = [
 	[false, L1, w, 0],
 	[false, L1, 2*w+L1, 0],
 	[false, L1, 3*w+2*L1, 0],
@@ -67,7 +70,7 @@ walls = [
 	[false, L4, 2*w+L4, 2*w+2*L2]
 	];
 
-walls_rects = walls.map(function (wall) {
+let walls_rects = walls.map(function (wall) {
 	return new Konva.Rect({
 		x: offsetX + wall[2],
 		y: offsetY + wall[3],
@@ -79,14 +82,14 @@ walls_rects = walls.map(function (wall) {
 	});
 });
 
-walls_hovering = walls.map(function (wall) {return false;});
-walls_times_crossed = walls.map(function (wall) {return 0;});
+let walls_hovering = walls.map(function (wall) {return false;});
+let walls_times_crossed = walls.map(function (wall) {return 0;});
 
 walls_rects.forEach(function (wall) {
 	layer.add(wall);
 });
 
-corners_circles = corners.map(function (corner) {
+let corners_circles = corners.map(function (corner) {
 	return new Konva.Circle({
 		x: offsetX + corner[0],
 		y: offsetY + corner[1],
@@ -102,23 +105,23 @@ corners_circles.forEach(function (corner) {
 }
 );
 
-var canvas = document.createElement('canvas');
+let canvas = document.createElement('canvas');
 canvas.width = screenWidth;
 canvas.height = screenHeight;
 
-var image = new Konva.Image({
+let image = new Konva.Image({
 	image: canvas,
 	x: 0,
 	y: 0,
 });
 layer.add(image);
 
-var context = canvas.getContext('2d');
+let context = canvas.getContext('2d');
 context.strokeStyle = '#000000';
 context.lineJoin = 'round';
 context.lineWidth = pathWidth;
 
-var circle = new Konva.Circle({
+let circle = new Konva.Circle({
 	x: dotX,
 	y: dotY,
 	radius: dotRadius,
@@ -142,15 +145,15 @@ circle.on('dragstart', function () {
 });
 
 circle.on('dragmove', function () {
-	currentPos = circle.absolutePosition();
+	let currentPos = circle.absolutePosition();
 
 	for (let i=0; i<corners_circles.length; ++i) {
-		xCorner = offsetX + corners[i][0];
-		yCorner = offsetY + corners[i][1];
-		deltaX = currentPos.x - xCorner;
-		deltaY = currentPos.y - yCorner;
-		dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-		scale = dist / (cornerRadius + dotRadius);
+		let xCorner = offsetX + corners[i][0];
+		let yCorner = offsetY + corners[i][1];
+		let deltaX = currentPos.x - xCorner;
+		let deltaY = currentPos.y - yCorner;
+		let dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
+		let scale = dist / (cornerRadius + dotRadius);
 		if (scale<1) {
 			this.x(xCorner + deltaX/scale);
 			this.y(yCorner + deltaY/scale);
@@ -186,30 +189,30 @@ circle.on('dragmove', function () {
 });
 
 function haveIntersection(lastPost, currentPos, wall) {
-	x1 = lastPos.x;
-	y1 = lastPos.y;
+	let x1 = lastPos.x;
+	let y1 = lastPos.y;
 
-	x2 = currentPos.x;
-	y2 = currentPos.y;
+	let x2 = currentPos.x;
+	let y2 = currentPos.y;
 
-	xLeft = x1<x2?x1:x2;
-	xRigth = x1>x2?x1:x2;
+	let xLeft = x1<x2?x1:x2;
+	let xRigth = x1>x2?x1:x2;
 
-	yTop = y1<y2?y1:y2;
-	yBot = y1>y2?y1:y2;
+	let yTop = y1<y2?y1:y2;
+	let yBot = y1>y2?y1:y2;
 
 	wall = wall.getClientRect();
-	topLeftX = wall.x;
-	topLeftY = wall.y;
-	width = wall.width;
-	height =  wall.height;
+	let topLeftX = wall.x;
+	let topLeftY = wall.y;
+	let width = wall.width;
+	let height =  wall.height;
 
-	yCut = y1+(topLeftX-x1)*(y2-y1)/(x2-x1);
+	let yCut = y1+(topLeftX-x1)*(y2-y1)/(x2-x1);
 	if (topLeftY<yCut && yCut<topLeftY+height && xLeft<topLeftX && topLeftX<xRigth) {
 		return true;
 	}
 
-	xCut = x1 + (topLeftY-y1)*(x2-x1)/(y2-y1);
+	let xCut = x1 + (topLeftY-y1)*(x2-x1)/(y2-y1);
 	if (topLeftX<xCut && xCut<topLeftX+width && yTop<topLeftY && topLeftY<yBot) {
 		return true;
 	}

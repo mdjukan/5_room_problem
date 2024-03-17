@@ -11,5 +11,11 @@
   "license": "ISC",
   "dependencies": {
     "konva": "^9.3.6"
+  },
+  "devDependencies": {
+    "css-loader": "^6.10.0",
+    "style-loader": "^3.3.4",
+    "webpack": "^5.90.3",
+    "webpack-cli": "^5.1.4"
   }
 }
