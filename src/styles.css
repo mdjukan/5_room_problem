@@ -1,0 +1,19 @@
+body {
+	font-family: Commissioner;
+	display: flex;
+	flex-direction: column;
+ justify-content: center;
+ align-items: center;
+}
+input {
+	margin: 20px;
+	font-size: 25px;
+	background: #999999;
+	border: 5px solid black;
+	outline: none;
+	padding: 5px;
+}
+
+#container {
+	border: 1px solid gray;
+}
