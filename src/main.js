@@ -1,258 +1,293 @@
-import './styles.css';
+import {DeviceRotationPrompt} from 'device-rotation-prompt';
 import Konva from 'konva';
+import { getLevels, getDimensions } from './draw.js';
 
-/////////////CONSTANTS//////////
-let screenWidth = 0.75 * window.innerWidth;
-let screenHeight = 0.8 * window.innerHeight;
+const screenWidth = window.innerWidth;
+const screenHeight = window.innerHeight;
 
-let w = 0.01 * screenWidth;
-let cornerRadius = 0.015 * screenWidth;
-let L1 = 0.18 * screenWidth;
-let L2 = 0.15 * screenWidth;
-let L3 = (L1-w)/2;
-let L4 = (3*L1+w)/2;
+////////////////ROTATE DEVICE////////////////
+const pleaseRotate = new DeviceRotationPrompt({
+	orientation: 'landscape',
+	text: 'Ротирај уређај'
+});
 
-let totalWidth = 4*w+3*L1;
-let totalHeight = 3*w+2*L2;
+//////////////// GETING DATA ////////////////
 
-let offsetX = (screenWidth-totalWidth)/2;
-let offsetY = (screenHeight-totalHeight)/2;
+const dims = getDimensions(screenWidth, screenHeight);
+const levels = getLevels(screenWidth, screenHeight);
 
-let dotX = 0.1 * screenWidth;
-let dotY = 0.1 * screenHeight;
-let dotRadius = cornerRadius;
-let pathWidth = 0.01 * screenWidth;
+//////////////// KONVA INIT ////////////////
 
-let lastPos;
-
-
-///////////SCREEN INIT///////////
-let stage = new Konva.Stage({
+const stage = new Konva.Stage({
 	container: 'container',
 	width: screenWidth,
-	height: screenHeight
+	height: screenHeight,
 });
 
-let layer = new Konva.Layer();
-stage.add(layer);
+const baseLayer = new Konva.Layer();
+stage.add(baseLayer);
 
+//////////////// BACKGROUND /////////////
 
-///CORNERS///
-let corners = [[0,0], [w+L1, 0], [2*w+2*L1, 0], [3*w+3*L1, 0],
-	[0, w+L2], [w+L1, w+L2], [2*w+L1+L3, w+L2], [2*w+2*L1, w+L2], [3*w+3*L1, w+L2],
-	[0, 2*w+2*L2], [w+L4, 2*w+2*L2], [3*w+3*L1, 2*w+2*L2]]
-
-corners = corners.map(function (corner) {
-	let x = corner[0];
-	let y = corner[1];
-	return [x+w/2, y+w/2];
-});
-
-
-///WALLLS////
-//[true if Ver, duzina, x, y]
-let walls = [
-	[false, L1, w, 0],
-	[false, L1, 2*w+L1, 0],
-	[false, L1, 3*w+2*L1, 0],
-	[true, L2, 0, w],
-	[true, L2, w+L1, w],
-	[true, L2, 2*w+2*L1, w],
-	[true, L2, 3*w+3*L1, w],
-	[false, L1, w, w+L2],
-	[false, L3, 2*w+L1, w+L2],
-	[false, L3, 3*w+L1+L3, w+L2],
-	[false, L1, 3*w+2*L1, w+L2],
-	[true, L2, 0, 2*w+L2],
-	[true, L2, w+L4, 2*w+L2],
-	[true, L2, 3*w+3*L1, 2*w+L2],
-	[false, L4, w, 2*w+2*L2],
-	[false, L4, 2*w+L4, 2*w+2*L2]
-	];
-
-let walls_rects = walls.map(function (wall) {
-	return new Konva.Rect({
-		x: offsetX + wall[2],
-		y: offsetY + wall[3],
-		width: wall[0]?w:wall[1],
-		height: wall[0]?wall[1]:w,
-		fill: 'black',
-		stroke: 'black',
-		strokeWidth: 5
+/*
+Konva.Image.fromURL('./background.jpg', function (background) {
+	background.setAttrs({
+		x: 0,
+		y: 0,
+		scaleX: dims.backgourndScaleX,
+		scaleY: dims.backgroundScaleY,
 	});
+
+	background.scaleX(dims.backgroundScaleX);
+	background.scaleY(dims.backgroundScaleY);
+	baseLayer.add(background);
+	background.zIndex(0);
 });
+*/
 
-let walls_hovering = walls.map(function (wall) {return false;});
-let walls_times_crossed = walls.map(function (wall) {return 0;});
 
-walls_rects.forEach(function (wall) {
-	layer.add(wall);
-});
+//////////////// CANVAS /////////////
 
-let corners_circles = corners.map(function (corner) {
-	return new Konva.Circle({
-		x: offsetX + corner[0],
-		y: offsetY + corner[1],
-		radius: cornerRadius,
-		fill: 'white',
-		stroke: 'black',
-		strokeWidth: 8
-	});
-});
-
-corners_circles.forEach(function (corner) {
-	layer.add(corner);
-}
-);
-
-let canvas = document.createElement('canvas');
+const canvas = document.createElement('canvas');
 canvas.width = screenWidth;
 canvas.height = screenHeight;
 
-let image = new Konva.Image({
+const context = canvas.getContext('2d');
+context.strokeStyle = '#040273';
+context.lineJoin = 'round';
+context.lineWidth = dims.pathWidth;
+
+const canvasImage = new Konva.Image({
 	image: canvas,
 	x: 0,
 	y: 0,
 });
-layer.add(image);
 
-let context = canvas.getContext('2d');
-context.strokeStyle = '#040273';
-context.lineJoin = 'round';
-context.lineWidth = pathWidth;
+const gameLayer = new Konva.Layer();
+stage.add(gameLayer);
+gameLayer.add(canvasImage);
 
-let circle = new Konva.Circle({
-	x: dotX,
-	y: dotY,
-	radius: dotRadius,
-	fill: 'red',
-	stroke: 'black',
-	strokeWidth: 8,
+////////////////// BUTTONS /////////////////
+
+function createButton(dims, text) {
+	const button = new Konva.Group({
+		x: dims.buttonBasePosition[0],
+		y: dims.buttonBasePosition[1],
+		width: dims.buttonWidth,
+		height: dims.buttonHeight,
+	});
+
+	button.add(new Konva.Rect({
+		width: dims.buttonWidth,
+		height: dims.buttonHeight,
+		stroke: 'black',
+		strokeWidth: dims.buttonBorder,
+	}));
+
+	button.add(new Konva.Text({
+		text: text,
+		fontSize: dims.buttonFontSize,
+		fontFamily: 'Calibri',
+		fontWeight: 'bold',
+		fill: '#000',
+		width: dims.buttonWidth,
+		padding: dims.buttonPadding,
+		align: 'center'
+	}));
+
+	return button;
+}
+
+const checkButton = createButton(dims, 'Провера');
+const tryAgainButton = createButton(dims, 'Покушај поново');
+const nextLevelButton = createButton(dims, 'Следећи ниво');
+
+gameLayer.add(checkButton);
+gameLayer.add(tryAgainButton);
+gameLayer.add(nextLevelButton);
+
+nextLevelButton.hide();
+tryAgainButton.hide();
+
+nextLevelButton.on('mouseup touchend', function () {
+	removeCurrentLevel();
+	currentLevel += 1;
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	pen.x(dims.penPosition[0]);
+	pen.y(dims.penPosition[1]);
+	paintCurrentLevel();
+
+	nextLevelButton.hide();
+	checkButton.show();
+	pen.draggable(true);
+});
+
+tryAgainButton.on('mouseup touchend', function () {
+	context.clearRect(0, 0, canvas.width, canvas.height);
+	pen.x(dims.penPosition[0]);
+	pen.y(dims.penPosition[1]);
+	levels[currentLevel].elements.walls.forEach(function (wall) {
+			wall.fill('black');
+	});
+
+	const numWalls = levels[currentLevel].intersection.length;
+	levels[currentLevel].intersection = (new Array(numWalls)).fill(0);
+nextLevelButton.hide();
+
+	tryAgainButton.hide();
+	checkButton.show();
+	pen.draggable(true);
+});
+
+checkButton.on('mouseup touchend', function () {
+	let fail = false;
+	levels[currentLevel].elements.walls.forEach(function (wall, idx) {
+		if (levels[currentLevel].intersection[idx]!=1) {
+			wall.fill('red');
+			fail = true;
+		} else {
+			wall.fill('green');
+		}
+
+	});
+
+	checkButton.hide();
+	if (!fail) {
+		nextLevelButton.show();
+	} else {
+		tryAgainButton.show();
+	}
+
+	const numWalls = levels[currentLevel].intersection.length;
+	levels[currentLevel].intersection = (new Array(numWalls)).fill(0);
+
+	pen.draggable(false);
+});
+
+
+///////////////// PEN //////////////////////
+let penPath = "M29.024 6.499l-2.467 2.467-3.523-3.523 2.467-2.467c0.973-0.973 2.551-0.973 3.523 0s0.973 2.55 0 3.523zM27.614 9.317c0.195-0.194 0.511-0.194 0.705 0 0.195 0.195 0.195 0.511 0 0.705l-9.16 9.161c-0.195 0.194-0.511 0.194-0.705 0s-0.194-0.51 0-0.704l5.99-5.99-4.934-4.934 2.114-2.113 4.933 4.933 1.057-1.058zM19.511 8.966l3.523 3.523-14.094 14.094-3.523-3.523 14.094-14.094zM2.246 29.754l2.466-5.989 3.523 3.523-5.989 2.466z"
+
+const pen = new Konva.Path({
+	x: dims.penPosition[0],
+	y: dims.penPosition[1],
+	scaleX: dims.penScale, //dims.penScale,
+	scaleY: dims.penScale,
+	data: penPath,
+	fill: 'black',
 	draggable: true,
 });
 
-layer.add(circle);
+gameLayer.add(pen);
+const penHeight = pen.getClientRect().height;
+let penPos = undefined;
 
-circle.on('mouseover', function () {
-	document.body.style.cursor = 'pointer';
-});
-circle.on('mouseout', function () {
-	document.body.style.cursor = 'default';
-});
+//////////////// LEVEL /////////////////
 
-circle.on('dragstart', function () {
-	lastPos = circle.absolutePosition()
-});
+let currentLevel = 0;
 
-circle.on('dragmove', function () {
-	let currentPos = circle.absolutePosition();
+function paintCurrentLevel() {
+	levels[currentLevel].elements.walls.forEach(function (element) {
+		baseLayer.add(element);
+	});
 
-	for (let i=0; i<corners_circles.length; ++i) {
-		let xCorner = offsetX + corners[i][0];
-		let yCorner = offsetY + corners[i][1];
-		let deltaX = currentPos.x - xCorner;
-		let deltaY = currentPos.y - yCorner;
-		let dist = Math.sqrt(deltaX*deltaX + deltaY*deltaY);
-		let scale = dist / (cornerRadius + dotRadius);
-		if (scale<1) {
-			this.x(xCorner + deltaX/scale);
-			this.y(yCorner + deltaY/scale);
-			currentPos = circle.absolutePosition();
-			break;
-		}
-	}
-
-	for (let i=0; i<walls_rects.length; ++i) {
-		if (haveIntersection(lastPos, currentPos, walls_rects[i])) {
-			walls_times_crossed[i] += 1;
-		}
-	}
-		/*
-			console.log('intersection detected');
-			if (!walls_hovering[i]) {
-				walls_times_crossed[i] += 1;
-				walls_hovering[i] = true;
-			}
-		} else {
-			walls_hovering[i] = false;
-		}
-	}
-	*/
-
-	context.beginPath();
-	context.moveTo(lastPos.x, lastPos.y);
-	context.lineTo(currentPos.x, currentPos.y);
-	context.closePath();
-	context.stroke();
-	layer.batchDraw();
-	lastPos = currentPos;
-});
-
-function haveIntersection(lastPost, currentPos, wall) {
-	let x1 = lastPos.x;
-	let y1 = lastPos.y;
-
-	let x2 = currentPos.x;
-	let y2 = currentPos.y;
-
-	let xLeft = x1<x2?x1:x2;
-	let xRigth = x1>x2?x1:x2;
-
-	let yTop = y1<y2?y1:y2;
-	let yBot = y1>y2?y1:y2;
-
-	wall = wall.getClientRect();
-	let topLeftX = wall.x;
-	let topLeftY = wall.y;
-	let width = wall.width;
-	let height =  wall.height;
-
-	let yCut = y1+(topLeftX-x1)*(y2-y1)/(x2-x1);
-	if (topLeftY<yCut && yCut<topLeftY+height && xLeft<topLeftX && topLeftX<xRigth) {
-		return true;
-	}
-
-	let xCut = x1 + (topLeftY-y1)*(x2-x1)/(y2-y1);
-	if (topLeftX<xCut && xCut<topLeftX+width && yTop<topLeftY && topLeftY<yBot) {
-		return true;
-	}
-
-	return false;
+	levels[currentLevel].elements.corners.forEach(function (element) {
+		baseLayer.add(element);
+	});
 }
 
-document.getElementById('provera').addEventListener(
-	'click',
-	function () {
-		for (let i=0; i<walls.length; ++i) {
-			if (walls_times_crossed[i]==1) {
-				walls_rects[i].fill('green');
-				walls_rects[i].stroke('green');
-			} else {
-				walls_rects[i].fill('red');
-				walls_rects[i].stroke('red');
+function removeCurrentLevel() {
+	levels[currentLevel].elements.walls.forEach(function (element) {
+		element.destroy();
+	});
+
+	levels[currentLevel].elements.corners.forEach(function (element) {
+		element.destroy();
+	});
+
+	baseLayer.draw();
+}
+
+paintCurrentLevel();
+
+
+/////////////// PEN MOVE ////////////////
+pen.on('dragstart', function () {
+	penPos = pen.absolutePosition();
+});
+
+pen.on('dragmove', function () {
+	/////////////SPEED LIMIT///////////////
+	let currentPos = pen.absolutePosition();
+	let deltaX = currentPos.x - penPos.x;
+	let deltaY = currentPos.y - penPos.y;
+	let dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+	if (dist > dims.distLimit) {
+		let shiftX = deltaX * (dims.distLimit / dist);
+		let shiftY = deltaY * (dims.distLimit / dist);
+		pen.x(Math.round(penPos.x + shiftX));
+		pen.y(Math.round(penPos.y + shiftY));
+		currentPos = pen.absolutePosition();
+	}
+
+	/////////////CORNER COLLISION//////////////
+	levels[currentLevel].corners.forEach(function (corner) {
+		let penTopX = currentPos.x + dims.penTipOffset;
+		let penTopY = currentPos.y + dims.penTipOffset + penHeight;
+
+		let cornerX = corner[0];
+		let cornerY = corner[1];
+
+		let distX = penTopX - cornerX;
+		let distY = penTopY - cornerY;
+		let dist = Math.sqrt(distX * distX + distY * distY);
+
+		if (dist < dims.cornerDistLimit) {
+			let k = dims.cornerDistLimit / dist;
+			let newPenTopX = cornerX + k * (penTopX - cornerX);
+			let newPenTopY = cornerY + k * (penTopY - cornerY);
+			pen.x(newPenTopX - dims.penTipOffset);
+			pen.y(newPenTopY - dims.penTipOffset - penHeight);
+			currentPos = pen.absolutePosition();
+		}
+	});
+
+	////////////////WALL CROSS///////////////////
+	levels[currentLevel].walls.forEach(function (wall, idx) {
+		const x1 = wall[0][0];
+		const y1 = wall[0][1];
+		const x2 = wall[1][0];
+		const y2 = wall[1][1];
+
+		const px1 = penPos.x + dims.penTipOffset;
+		const py1 = penPos.y + dims.penTipOffset + penHeight;
+		const px2 = currentPos.x + dims.penTipOffset;
+		const py2 = currentPos.y + dims.penTipOffset + penHeight;
+
+		if (x1 == x2 && Math.min(px1, px2) < x1 && x1 < Math.max(px1, px2)) {
+			const cutY = py1 + (py2 - py1) / (px2 - px1) * (x1 - px1);
+			if (Math.min(y1, y2) < cutY && cutY < Math.max(y1, y2)) {
+				levels[currentLevel].intersection[idx] += 1;
+				console.log(levels[currentLevel].intersection);
+			}
+		} 
+
+		if (y1 == y2 && Math.min(py1, py2) < y1 && y1 < Math.max(py1, py2)) {
+			const cutX = px1 + (px2 - px1) / (py2 - py1) * (y1 - py1);
+			if (Math.min(x1, x2) < cutX && cutX < Math.max(x1, x2)) {
+				levels[currentLevel].intersection[idx] += 1;
+				console.log(levels[currentLevel].intersection);
 			}
 		}
-	},
-	false
-);
-
-document.getElementById('reset').addEventListener(
-	'click',
-	function () {
-		walls_hovering.fill(false);
-		walls_times_crossed.fill(0);
-
-		circle.x(dotX);
-		circle.y(dotY);
-		context.clearRect(0, 0, canvas.width, canvas.height);
-		for (let i=0; i<walls.length; ++i) {
-				walls_rects[i].fill('black');
-				walls_rects[i].stroke('black');
-		}
-	},
-	false
-);
-
-window.addEventListener('resize', function () {
-    window.location.reload();
+	});
+	
+	//////////////LINE DRAWING/////////////////
+	context.beginPath();
+	context.moveTo(penPos.x + dims.penTipOffset, penPos.y + penHeight + dims.penTipOffset);
+	context.lineTo(pen.absolutePosition().x + dims.penTipOffset, pen.absolutePosition().y + penHeight + dims.penTipOffset);
+	context.closePath();
+	context.stroke();
+	gameLayer.batchDraw();
+	penPos = pen.absolutePosition(); //last handeler updates position
 });
