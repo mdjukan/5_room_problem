@@ -291,3 +291,8 @@ pen.on('dragmove', function () {
 	gameLayer.batchDraw();
 	penPos = pen.absolutePosition(); //last handeler updates position
 });
+
+/////////////RELOAD ON ORIENTATION CHANGE///////////////
+window.addEventListener('resize', function () {
+    window.location.reload();
+});
