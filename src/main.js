@@ -166,20 +166,20 @@ checkButton.on('mouseup touchend', function () {
 
 
 ///////////////// PEN //////////////////////
-let penPath = "M29.024 6.499l-2.467 2.467-3.523-3.523 2.467-2.467c0.973-0.973 2.551-0.973 3.523 0s0.973 2.55 0 3.523zM27.614 9.317c0.195-0.194 0.511-0.194 0.705 0 0.195 0.195 0.195 0.511 0 0.705l-9.16 9.161c-0.195 0.194-0.511 0.194-0.705 0s-0.194-0.51 0-0.704l5.99-5.99-4.934-4.934 2.114-2.113 4.933 4.933 1.057-1.058zM19.511 8.966l3.523 3.523-14.094 14.094-3.523-3.523 14.094-14.094zM2.246 29.754l2.466-5.989 3.523 3.523-5.989 2.466z"
+let penPath = "M0 0-.1-5.8 21.9-43.9 27.1-40.9 5.1-2.8 0 0";
 
 const pen = new Konva.Path({
 	x: dims.penPosition[0],
 	y: dims.penPosition[1],
 	scaleX: dims.penScale, //dims.penScale,
-	scaleY: dims.penScale,
+	scaleY: dims.penScale, //TODO
 	data: penPath,
 	fill: 'black',
 	draggable: true,
 });
 
 gameLayer.add(pen);
-const penHeight = pen.getClientRect().height;
+const penHeight = 0; // pen.getClientRect().height;
 let penPos = undefined;
 
 //////////////// LEVEL /////////////////
