@@ -1,4 +1,4 @@
-import {DeviceRotationPrompt} from 'device-rotation-prompt';
+import { DeviceRotationPrompt } from 'device-rotation-prompt';
 import Konva from 'konva';
 import { getLevels, getDimensions } from './draw.js';
 
@@ -93,17 +93,25 @@ nextLevelButton.on('mouseup touchend', function () {
 	context.clearRect(0, 0, canvas.width, canvas.height);
 	pen.x(dims.penPosition[0]);
 	pen.y(dims.penPosition[1]);
+
+	penContainer.x(pen.x());
+	penContainer.y(pen.y() - penContainer.height());
+
 	paintCurrentLevel();
 
 	nextLevelButton.hide();
 	checkButton.show();
-	pen.draggable(true);
+	penContainer.draggable(true);
 });
 
 tryAgainButton.on('mouseup touchend', function () {
 	context.clearRect(0, 0, canvas.width, canvas.height);
+
 	pen.x(dims.penPosition[0]);
 	pen.y(dims.penPosition[1]);
+	penContainer.x(pen.x());
+	penContainer.y(pen.y() - penContainer.height());
+
 	levels[currentLevel].elements.walls.forEach(function (wall) {
 			wall.fill('black');
 	});
@@ -114,7 +122,7 @@ nextLevelButton.hide();
 
 	tryAgainButton.hide();
 	checkButton.show();
-	pen.draggable(true);
+	penContainer.draggable(true);
 });
 
 checkButton.on('mouseup touchend', function () {
@@ -139,7 +147,7 @@ checkButton.on('mouseup touchend', function () {
 	const numWalls = levels[currentLevel].intersection.length;
 	levels[currentLevel].intersection = (new Array(numWalls)).fill(0);
 
-	pen.draggable(false);
+	penContainer.draggable(false);
 });
 
 //////////////// ADDING GAME INFO /////////////////
@@ -175,11 +183,22 @@ const pen = new Konva.Path({
 	scaleY: dims.penScale,
 	data: penPath,
 	fill: 'black',
+});
+
+const penRect = pen.getClientRect();
+const penContainer = new Konva.Rect({
+	x: penRect.x,
+	y: penRect.y,
+	width: penRect.width,
+	height: penRect.height,
+	stroke: 'black',
+	strokeWidth: 0,
 	draggable: true,
 });
 
 gameLayer.add(pen);
-const penHeight = 0;
+gameLayer.add(penContainer);
+
 let penPos = undefined;
 
 //////////////// LEVEL /////////////////
@@ -213,12 +232,12 @@ function between(a,x,b) {
 	return Math.min(a,b)<x && x<Math.max(a,b);
 }
 
-pen.on('dragstart', function () {
-	penPos = pen.absolutePosition();
+penContainer.on('dragstart', function () {
+	penPos = penContainer.absolutePosition();
 });
 
-pen.on('dragmove', function () {
-	let currentPos = pen.absolutePosition();
+penContainer.on('dragmove', function () {
+	let currentPos = penContainer.absolutePosition();
 	/////////////SPEED LIMIT///////////////
 	let deltaX = currentPos.x - penPos.x;
 	let deltaY = currentPos.y - penPos.y;
@@ -227,14 +246,14 @@ pen.on('dragmove', function () {
 	if (dist > dims.distLimit) {
 		let shiftX = deltaX * (dims.distLimit / dist);
 		let shiftY = deltaY * (dims.distLimit / dist);
-		pen.x(Math.round(penPos.x + shiftX));
-		pen.y(Math.round(penPos.y + shiftY));
-		currentPos = pen.absolutePosition();
+		penContainer.x(Math.round(penPos.x + shiftX));
+		penContainer.y(Math.round(penPos.y + shiftY));
+		currentPos = penContainer.absolutePosition();
 	}
 
 	/////////////CORNER COLLISION//////////////
 	let penTopX = currentPos.x;
-	let penTopY = currentPos.y;
+	let penTopY = currentPos.y + penContainer.height();
 	levels[currentLevel].corners.forEach(function (corner) {
 		let cornerX = corner[0];
 		let cornerY = corner[1];
@@ -247,17 +266,17 @@ pen.on('dragmove', function () {
 			let k = dims.cornerDistLimit / dist;
 			let newPenTopX = cornerX + k * (penTopX - cornerX);
 			let newPenTopY = cornerY + k * (penTopY - cornerY);
-			pen.x(newPenTopX);
-			pen.y(newPenTopY);
-			currentPos = pen.absolutePosition();
+			penContainer.x(newPenTopX);
+			penContainer.y(newPenTopY - penContainer.height());
+			currentPos = penContainer.absolutePosition();
 		}
 	});
 
 	////////////////WALL CROSS///////////////////
 	const px1 = penPos.x;
-	const py1 = penPos.y;
+	const py1 = penPos.y + penContainer.height();
 	const px2 = currentPos.x;
-	const py2 = currentPos.y;
+	const py2 = currentPos.y + penContainer.height();
 
 	let verticalPath = px1==px2;
 
@@ -306,7 +325,6 @@ pen.on('dragmove', function () {
 
 		if(wallCut) {
 			levels[currentLevel].intersection[idx] += 1;
-			console.log(levels[currentLevel].intersection);
 		}
 	});
 
@@ -317,7 +335,9 @@ pen.on('dragmove', function () {
 	context.closePath();
 	context.stroke();
 	gameLayer.batchDraw();
-	penPos = pen.absolutePosition(); //last handeler updates position
+	penPos = penContainer.absolutePosition(); //last handeler updates position
+	pen.x(penPos.x);
+	pen.y(penPos.y + penContainer.height() );
 });
 
 /////////////RELOAD ON ORIENTATION CHANGE///////////////
