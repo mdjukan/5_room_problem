@@ -12,12 +12,10 @@ const pleaseRotate = new DeviceRotationPrompt({
 });
 
 //////////////// GETING DATA ////////////////
-
 const dims = getDimensions(screenWidth, screenHeight);
 const levels = getLevels(screenWidth, screenHeight);
 
 //////////////// KONVA INIT ////////////////
-
 const stage = new Konva.Stage({
 	container: 'container',
 	width: screenWidth,
@@ -27,27 +25,7 @@ const stage = new Konva.Stage({
 const baseLayer = new Konva.Layer();
 stage.add(baseLayer);
 
-//////////////// BACKGROUND /////////////
-
-/*
-Konva.Image.fromURL('./background.jpg', function (background) {
-	background.setAttrs({
-		x: 0,
-		y: 0,
-		scaleX: dims.backgourndScaleX,
-		scaleY: dims.backgroundScaleY,
-	});
-
-	background.scaleX(dims.backgroundScaleX);
-	background.scaleY(dims.backgroundScaleY);
-	baseLayer.add(background);
-	background.zIndex(0);
-});
-*/
-
-
 //////////////// CANVAS /////////////
-
 const canvas = document.createElement('canvas');
 canvas.width = screenWidth;
 canvas.height = screenHeight;
@@ -68,7 +46,6 @@ stage.add(gameLayer);
 gameLayer.add(canvasImage);
 
 ////////////////// BUTTONS /////////////////
-
 function createButton(dims, text) {
 	const button = new Konva.Group({
 		x: dims.buttonBasePosition[0],
@@ -171,21 +148,18 @@ let penPath = "M0 0-.1-5.8 21.9-43.9 27.1-40.9 5.1-2.8 0 0";
 const pen = new Konva.Path({
 	x: dims.penPosition[0],
 	y: dims.penPosition[1],
-	scaleX: dims.penScale, //dims.penScale,
-	scaleY: dims.penScale, //TODO
+	scaleX: dims.penScale,
+	scaleY: dims.penScale,
 	data: penPath,
 	fill: 'black',
 	draggable: true,
 });
 
 gameLayer.add(pen);
-const penHeight = 0; // pen.getClientRect().height;
+const penHeight = 0;
 let penPos = undefined;
 
 //////////////// LEVEL /////////////////
-
-let currentLevel = 0;
-
 function paintCurrentLevel() {
 	levels[currentLevel].elements.walls.forEach(function (element) {
 		baseLayer.add(element);
@@ -208,17 +182,21 @@ function removeCurrentLevel() {
 	baseLayer.draw();
 }
 
+let currentLevel = 0;
 paintCurrentLevel();
 
-
 /////////////// PEN MOVE ////////////////
+function between(a,x,b) {
+	return Math.min(a,b)<x && x<Math.max(a,b);
+}
+
 pen.on('dragstart', function () {
 	penPos = pen.absolutePosition();
 });
 
 pen.on('dragmove', function () {
-	/////////////SPEED LIMIT///////////////
 	let currentPos = pen.absolutePosition();
+	/////////////SPEED LIMIT///////////////
 	let deltaX = currentPos.x - penPos.x;
 	let deltaY = currentPos.y - penPos.y;
 	let dist = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
@@ -232,10 +210,9 @@ pen.on('dragmove', function () {
 	}
 
 	/////////////CORNER COLLISION//////////////
+	let penTopX = currentPos.x;
+	let penTopY = currentPos.y;
 	levels[currentLevel].corners.forEach(function (corner) {
-		let penTopX = currentPos.x + dims.penTipOffset;
-		let penTopY = currentPos.y + dims.penTipOffset + penHeight;
-
 		let cornerX = corner[0];
 		let cornerY = corner[1];
 
@@ -247,45 +224,73 @@ pen.on('dragmove', function () {
 			let k = dims.cornerDistLimit / dist;
 			let newPenTopX = cornerX + k * (penTopX - cornerX);
 			let newPenTopY = cornerY + k * (penTopY - cornerY);
-			pen.x(newPenTopX - dims.penTipOffset);
-			pen.y(newPenTopY - dims.penTipOffset - penHeight);
+			pen.x(newPenTopX);
+			pen.y(newPenTopY);
 			currentPos = pen.absolutePosition();
 		}
 	});
 
 	////////////////WALL CROSS///////////////////
+	const px1 = penPos.x;
+	const py1 = penPos.y;
+	const px2 = currentPos.x;
+	const py2 = currentPos.y;
+
+	let verticalPath = px1==px2;
+
 	levels[currentLevel].walls.forEach(function (wall, idx) {
 		const x1 = wall[0][0];
 		const y1 = wall[0][1];
 		const x2 = wall[1][0];
 		const y2 = wall[1][1];
 
-		const px1 = penPos.x + dims.penTipOffset;
-		const py1 = penPos.y + dims.penTipOffset + penHeight;
-		const px2 = currentPos.x + dims.penTipOffset;
-		const py2 = currentPos.y + dims.penTipOffset + penHeight;
+		let wallCut = false;
+		const verticalWall = x1 == x2;
 
-		if (x1 == x2 && Math.min(px1, px2) < x1 && x1 < Math.max(px1, px2)) {
-			const cutY = py1 + (py2 - py1) / (px2 - px1) * (x1 - px1);
-			if (Math.min(y1, y2) < cutY && cutY < Math.max(y1, y2)) {
-				levels[currentLevel].intersection[idx] += 1;
-				console.log(levels[currentLevel].intersection);
-			}
+		if (verticalWall && x1==px2 && between(y1, py2, y2)) {
+			wallCut = true;
 		} 
 
-		if (y1 == y2 && Math.min(py1, py2) < y1 && y1 < Math.max(py1, py2)) {
-			const cutX = px1 + (px2 - px1) / (py2 - py1) * (y1 - py1);
-			if (Math.min(x1, x2) < cutX && cutX < Math.max(x1, x2)) {
-				levels[currentLevel].intersection[idx] += 1;
-				console.log(levels[currentLevel].intersection);
+		if (!verticalWall && y1==py2 && between(x1, px2, x2)) {
+			wallCut = true;
+		}
+
+		if (verticalPath && !verticalWall) {
+			if (between(py1, y1, py2) && between(x1, px2, x2)) {
+				wallCut = true;
 			}
 		}
+
+		if (!verticalPath) {
+			let k = (py2-py1)/(px2-px1); 
+
+			if (verticalWall) {
+				if (between(px1, x1, px2)) {
+					const yCut = k * (x1 - px1) + py1;
+					if (between(y1, yCut, y2)) {
+						wallCut = true;
+					}
+				}
+			} else {
+				if (between(py1, y1, py2)) {
+					const xCut = (y1-py1)/k + px1;
+					if (between(x1, xCut, x2)) {
+						wallCut = true;
+					}
+				}
+			}
+		}
+
+		if(wallCut) {
+			levels[currentLevel].intersection[idx] += 1;
+			console.log(levels[currentLevel].intersection);
+		}
 	});
-	
+
 	//////////////LINE DRAWING/////////////////
 	context.beginPath();
-	context.moveTo(penPos.x + dims.penTipOffset, penPos.y + penHeight + dims.penTipOffset);
-	context.lineTo(pen.absolutePosition().x + dims.penTipOffset, pen.absolutePosition().y + penHeight + dims.penTipOffset);
+	context.moveTo(px1, py1);
+	context.lineTo(px2, py2);
 	context.closePath();
 	context.stroke();
 	gameLayer.batchDraw();
