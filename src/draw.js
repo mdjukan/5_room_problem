@@ -17,14 +17,11 @@ const PEN_ORIGINAL_HEIGHT = 20;
 const PEN_TIP_OFFSET_ORIGINAL = 0;
 const PATH_WIDTH_TO_SCREEN_HEIGHT = 0.015;
 
-const BACKGROUND_WIDTH = 612;
-const BACKGROUND_HEIGHT = 382;
-
 const DIST_LIMIT_TO_SCREEN_WIDTH = 0.08;
 
-const BUTTON_WIDTH_TO_SCREEN_WIDTH = 0.18;
+const BUTTON_WIDTH_TO_SCREEN_WIDTH = 0.25;
 const BUTTON_HEIGHT_TO_SCREEN_HEIGHT = 0.08;
-const BUTTON_FONT_SIZE = 0.04;
+const BUTTON_FONT_SIZE = 0.06;
 const BUTTON_BORDER_TO_SCREEN_HEIGHT = 0.01;
 
 export function getDimensions(screenWidth, screenHeight) {
@@ -32,9 +29,6 @@ export function getDimensions(screenWidth, screenHeight) {
 	dims.penPosition = [PEN_OFFSET_X * screenWidth, PEN_OFFSET_Y * screenHeight];
 	dims.penScale = screenHeight / (SCREEN_PEN_RATIO * PEN_ORIGINAL_HEIGHT);
 	dims.penTipOffset = dims.penScale * PEN_TIP_OFFSET_ORIGINAL;
-
-	dims.backgroundScaleX = screenWidth / BACKGROUND_WIDTH;
-	dims.backgroundScaleY = screenHeight / BACKGROUND_HEIGHT;
 
 	dims.distLimit = screenWidth * DIST_LIMIT_TO_SCREEN_WIDTH;
 	dims.pathWidth = PATH_WIDTH_TO_SCREEN_HEIGHT * screenHeight;

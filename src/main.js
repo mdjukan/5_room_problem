@@ -11,7 +11,7 @@ const pleaseRotate = new DeviceRotationPrompt({
 	text: 'Ротирај уређај'
 });
 
-//////////////// GETING DATA ////////////////
+//////////////// GET DATA ////////////////
 const dims = getDimensions(screenWidth, screenHeight);
 const levels = getLevels(screenWidth, screenHeight);
 
@@ -24,6 +24,7 @@ const stage = new Konva.Stage({
 
 const baseLayer = new Konva.Layer();
 stage.add(baseLayer);
+
 
 //////////////// CANVAS /////////////
 const canvas = document.createElement('canvas');
@@ -141,6 +142,28 @@ checkButton.on('mouseup touchend', function () {
 	pen.draggable(false);
 });
 
+//////////////// ADDING GAME INFO /////////////////
+let message = "Оловком нацртај линију која сече сваку од дужи тачно једном.";
+
+const messageElement = new Konva.Group({
+		x: 0,
+		y: 0,
+		width: screenWidth,
+		height: dims.buttonHeight,
+	});
+
+messageElement.add(new Konva.Text({
+		text: message,
+		fontSize: dims.buttonFontSize,
+		fontFamily: 'Calibri',
+		fontWeight: 'bold',
+		fill: '#000',
+		width: screenWidth,
+		padding: dims.buttonPadding,
+		align: 'center'
+	}));
+
+baseLayer.add(messageElement);
 
 ///////////////// PEN //////////////////////
 let penPath = "M0 0-.1-5.8 21.9-43.9 27.1-40.9 5.1-2.8 0 0";
