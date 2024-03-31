@@ -1,6 +1,7 @@
 import { DeviceRotationPrompt } from 'device-rotation-prompt';
 import Konva from 'konva';
 import { getLevels, getDimensions } from './draw.js';
+import { analyitics } from './analyitics.js';
 
 const screenWidth = window.innerWidth;
 const screenHeight = window.innerHeight;
@@ -24,7 +25,6 @@ const stage = new Konva.Stage({
 
 const baseLayer = new Konva.Layer();
 stage.add(baseLayer);
-
 
 //////////////// CANVAS /////////////
 const canvas = document.createElement('canvas');
@@ -102,6 +102,8 @@ nextLevelButton.on('mouseup touchend', function () {
 	nextLevelButton.hide();
 	checkButton.show();
 	penContainer.draggable(true);
+
+	analyitics('next-level');
 });
 
 tryAgainButton.on('mouseup touchend', function () {
@@ -123,6 +125,8 @@ nextLevelButton.hide();
 	tryAgainButton.hide();
 	checkButton.show();
 	penContainer.draggable(true);
+
+	analyitics('try-again');
 });
 
 checkButton.on('mouseup touchend', function () {
@@ -148,6 +152,7 @@ checkButton.on('mouseup touchend', function () {
 	levels[currentLevel].intersection = (new Array(numWalls)).fill(0);
 
 	penContainer.draggable(false);
+	analyitics('check');
 });
 
 //////////////// ADDING GAME INFO /////////////////
@@ -343,4 +348,10 @@ penContainer.on('dragmove', function () {
 /////////////RELOAD ON ORIENTATION CHANGE///////////////
 window.addEventListener('resize', function () {
     window.location.reload();
+});
+
+/////////////ANALYITICS ON LOAD//////////////////
+window.addEventListener('load', function () {
+	console.log('LOAD');
+	analyitics('load');
 });
